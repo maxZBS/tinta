@@ -1,0 +1,230 @@
+name: Release
+
+# Runs when you push a tag like v1.0.0
+on:
+  push:
+    tags:
+      - 'v*'
+
+# Needed so the Action can create a Release and upload files to it
+permissions:
+  contents: write
+
+# If a newer tag is pushed while an older build for the same tag is still
+# running, cancel the stale one instead of running both.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # One "umbrella" job for the shared, OS-independent work: type-check the whole
+  # codebase and build the frontend once. The three OS builds below depend on it,
+  # so if the frontend is broken we never spin up the 3 heavy native builds —
+  # the release can't break halfway through. (The Rust compile itself can't be
+  # shared between OSes: each produces a different OS's machine code.)
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Bun cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lockb', '**/bun.lock') }}
+          restore-keys: ${{ runner.os }}-bun-
+
+      - name: Install frontend dependencies
+        run: bun install --frozen-lockfile
+
+      # tsc + vite build. Runs once here instead of three times inside each
+      # native build. Catches a broken frontend before any OS build starts.
+      - name: Type-check and build frontend
+        run: bun run build
+
+  build:
+    needs: frontend
+    strategy:
+      fail-fast: false
+      matrix:
+        # Ordered fastest-first (Linux, then Windows, then macOS). The jobs run
+        # in parallel regardless; this just lists the quick ones first in the UI.
+        include:
+          # Linux -> AppImage + .deb
+          - platform: 'ubuntu-22.04'
+            args: ''
+          # Windows -> NSIS .exe + .msi
+          - platform: 'windows-latest'
+            args: ''
+          # macOS — Apple Silicon only -> .dmg / .app. Built here (not locally)
+          # so the updater target produces a signed .app.tar.gz + .sig via the
+          # TAURI_SIGNING_PRIVATE_KEY secret, matching Windows/Linux.
+          #
+          # --skip-stapling: submit to Apple's notary service but DON'T block the
+          # build waiting for it to finish (and skip stapling the ticket into the
+          # .app). The first-ever notarization on a fresh Apple account is the
+          # slowest — Apple's queue routinely stalls it for an hour+, and GitHub's
+          # macOS runners drop the connection to appstoreconnect.apple.com while
+          # polling (NSURLError -1009), hanging the job. Skipping the wait sidesteps
+          # both: Apple still notarizes server-side, so the app is notarized; the
+          # tradeoff is Gatekeeper verifies online on first launch instead of from
+          # a stapled ticket. Once the account is warm and notarization is reliably
+          # fast (2-5 min), drop this flag to restore offline-friendly stapling.
+          - platform: 'macos-latest'
+            args: '--target aarch64-apple-darwin --skip-stapling'
+
+    runs-on: ${{ matrix.platform }}
+
+    # Build-speed env, applied to every OS in the matrix:
+    #   CARGO_INCREMENTAL=0 — incremental compilation only pays off across
+    #     repeated local builds on a persistent disk. CI runners are ephemeral,
+    #     so the incremental metadata is pure overhead — it bloats the cache and
+    #     is especially slow on Windows (hard-link churn). Off is faster in CI.
+    #   CARGO_PROFILE_RELEASE_DEBUG=false — drop debug info from the release
+    #     build. Smaller target/ → the Rust cache saves/restores faster.
+    #   CARGO_NET_GIT_FETCH_WITH_CLI=true — use the system git for crate fetches;
+    #     more reliable than cargo's built-in fetch on CI networks.
+    env:
+      CARGO_INCREMENTAL: 0
+      CARGO_PROFILE_RELEASE_DEBUG: false
+      CARGO_NET_GIT_FETCH_WITH_CLI: true
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2
+
+      # Cache Bun's global package store so installs are near-instant on reruns.
+      - name: Bun cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lockb', '**/bun.lock') }}
+          restore-keys: ${{ runner.os }}-bun-
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          # On macOS we build for Apple Silicon only
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin' || '' }}
+
+      # System dependencies required to build Tauri on Linux. This is the
+      # official Tauri-recommended install — a plain apt-get, no caching action.
+      #
+      # We dropped awalsh128/cache-apt-pkgs-action: its cache key is derived from
+      # resolved package versions and missed constantly (measured 190s vs 385s on
+      # back-to-back releases — a coin flip). A direct apt-get is stable at
+      # ~60-90s every run. --no-install-recommends skips the pile of optional
+      # gir1.2-*/bubblewrap/libdazzle packages apt would otherwise pull in but
+      # the build never needs.
+      #
+      # mold is a much faster linker; linking the final binary is a big chunk of
+      # Linux build time, so it trims that noticeably (wired in via RUSTFLAGS).
+      - name: Install Linux dependencies
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            mold
+
+      # Use mold as the linker on Linux only. Scoped via the job env below.
+      - name: Enable mold linker (Linux)
+        if: matrix.platform == 'ubuntu-22.04'
+        run: echo 'RUSTFLAGS=-C link-arg=-fuse-ld=mold' >> "$GITHUB_ENV"
+
+      # Cache the Rust build so releases compile faster.
+      # cache-on-failure keeps the dependency cache even when a build fails, so
+      # early/flaky runs still warm it up. A version bump changes Cargo.lock and
+      # misses the exact key, but rust-cache falls back to the previous cache via
+      # restore-keys — dependencies are reused, only our own crate recompiles.
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+          cache-on-failure: true
+
+      - name: Install frontend dependencies
+        run: bun install --frozen-lockfile
+
+      # The notarization API key is a file on disk, but secrets are strings.
+      # Decode the base64 .p8 secret into the path APPLE_API_KEY_PATH points to.
+      # macOS only, and only when the secret is present (skipped if unset).
+      - name: Write App Store Connect API key (macOS)
+        if: matrix.platform == 'macos-latest'
+        env:
+          APPLE_API_KEY_B64: ${{ secrets.APPLE_API_KEY_B64 }}
+        run: |
+          if [ -n "$APPLE_API_KEY_B64" ]; then
+            printf '%s' "$APPLE_API_KEY_B64" | base64 --decode > "${{ github.workspace }}/api-key.p8"
+          fi
+
+      - name: Build and upload to release
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Update signing key. Put both values in GitHub Secrets:
+          #   TAURI_SIGNING_PRIVATE_KEY          — contents of src-tauri/tinta-updater.key
+          #   TAURI_SIGNING_PRIVATE_KEY_PASSWORD — the password you set when generating it
+          # tauri-action signs the builds and generates latest.json automatically.
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          # --- macOS code signing + notarization (Developer ID) ---
+          # Only used on the macOS runner; harmless/empty elsewhere. When all of
+          # these are set, tauri-action signs with the Developer ID cert and
+          # notarizes via the App Store Connect API key, so the .dmg/.app open
+          # on any Mac without the "damaged" Gatekeeper error. If unset, the
+          # build falls back to an ad-hoc signature (the previous behaviour).
+          # Add these in GitHub → Settings → Secrets and variables → Actions:
+          #   APPLE_CERTIFICATE          — base64 of the Developer ID .p12
+          #   APPLE_CERTIFICATE_PASSWORD — password you set exporting the .p12
+          #   APPLE_SIGNING_IDENTITY     — e.g. "Developer ID Application: Name (TEAMID)"
+          #   KEYCHAIN_PASSWORD          — any random string (CI build keychain)
+          #   APPLE_API_ISSUER           — App Store Connect API Issuer ID
+          #   APPLE_API_KEY              — API Key ID
+          #   APPLE_API_KEY_PATH         — path to the .p8 (see step below)
+          #   APPLE_TEAM_ID              — your 10-char Team ID
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          APPLE_API_KEY_PATH: ${{ github.workspace }}/api-key.p8
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        with:
+          # Upload binaries to the Release with this tag. The release body is
+          # written by changelogithub in the job below, so we leave it unset.
+          tagName: ${{ github.ref_name }}
+          releaseName: 'Tinta __VERSION__'
+          # Draft: users won't see the release until the build is done and the
+          # changelog is generated. You publish it yourself.
+          releaseDraft: true
+          prerelease: false
+          args: ${{ matrix.args }}
+
+  # Separate job: runs ONCE after all 3 builds finish, and writes the changelog
+  # into the release body from the commits (Conventional Commits).
+  changelog:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # changelogithub needs the full commit history and tags
+          fetch-depth: 0
+
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Generate changelog and write it to the release
+        run: bunx changelogithub --draft
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

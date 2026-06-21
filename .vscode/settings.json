@@ -1,0 +1,7 @@
+{
+  "github.copilot.chat.commitMessageGeneration.instructions": [
+    {
+      "text": "Write commit messages in Conventional Commits format: '<type>: <short summary>'. Use one of these types: feat (new feature), fix (bug fix), perf (performance), refactor (code change that is neither a feature nor a fix), docs (documentation), style (formatting only), build (build system, deps, CI), chore (everything else). The summary must be lowercase, imperative mood ('add' not 'added'), no trailing period, and under ~72 characters. Optionally add a scope in parentheses, e.g. 'feat(editor): add word counter'. Write the message in English."
+    }
+  ]
+}

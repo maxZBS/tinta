@@ -1,0 +1,48 @@
+[package]
+name = "notes-app-tauri"
+# Kept at 0.0.0 on purpose: the app version lives in tauri.conf.json. Bumping
+# this would rewrite Cargo.lock every release and bust the Rust build cache.
+version = "0.0.0"
+description = "A Tauri App"
+authors = ["you"]
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+# The `_lib` suffix may seem redundant but it is necessary
+# to make the lib name unique and wouldn't conflict with the bin name.
+# This seems to be only an issue on Windows, see https://github.com/rust-lang/cargo/issues/8519
+name = "notes_app_tauri_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["protocol-asset"] }
+tauri-plugin-opener = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tauri-plugin-fs = "2.5.1"
+tauri-plugin-dialog = "2"
+tauri-plugin-window-state = "2"
+tauri-plugin-process = "2"
+printpdf = "0.9.1"
+
+# The updater only runs on desktop (not on mobile targets).
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri-plugin-updater = "2"
+
+# Release profile tuned for fast CI compiles. The app is a text editor, so
+# runtime perf is not opt-level-bound; we trade a little runtime perf for much
+# more parallel codegen.
+#   codegen-units = 256  -> maximum parallelism across cores (default is 16)
+#   lto = false          -> LTO is a large, serial time sink; skip it
+# We intentionally do NOT set `strip` here: stripping at the Cargo-profile level
+# broke the bundled app on macOS ("damaged") and Linux (AppImage wouldn't run)
+# in v0.10. Tauri strips its release bundles itself, safely — leave it to do so.
+[profile.release]
+codegen-units = 256
+lto = false
+opt-level = 3

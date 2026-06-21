@@ -1,0 +1,8 @@
+.tinta-sidebar {
+	background:
+		linear-gradient(180deg, var(--color-sidebar-glaze), transparent 44%),
+		var(--color-bg-sidebar);
+	/* A crisp inset edge instead of a large blurred drop-shadow: the 48px soft
+	   shadow forced WebKit to re-composite the sidebar layer every frame. */
+	box-shadow: inset -1px 0 0 var(--color-sidebar-edge);
+}

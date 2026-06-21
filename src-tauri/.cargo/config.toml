@@ -1,0 +1,9 @@
+# Build tuning. The linker is the single biggest chunk of native build time, so
+# each platform gets its fastest available linker:
+#   - Windows: rust-lld (LLVM's linker, shipped with the Rust toolchain). The
+#     default MSVC link.exe is single-threaded; rust-lld cuts link time sharply.
+#   - Linux uses mold, wired in CI via RUSTFLAGS (it's an apt package, not part
+#     of the toolchain, so it can't live here).
+#   - macOS already uses a fast linker (ld-prime) by default, so nothing to do.
+[target.x86_64-pc-windows-msvc]
+linker = "rust-lld.exe"

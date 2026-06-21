@@ -1,0 +1,145 @@
+.tinta-list-panel {
+	background:
+		linear-gradient(180deg, var(--color-surface-glaze), transparent 40%),
+		var(--color-bg-list);
+}
+
+.tinta-info-panel {
+	background:
+		linear-gradient(180deg, var(--color-surface-glaze), transparent 36%),
+		var(--color-bg-view);
+	box-shadow: inset 1px 0 0 var(--color-surface-edge);
+}
+
+.tinta-control-surface,
+.tinta-toolbar-surface {
+	border: 1px solid var(--color-surface-edge);
+	background: var(--color-bg-control);
+}
+
+.tinta-control-surface:focus-within {
+	border-color: var(--color-surface-active-border);
+	background: var(--color-bg-control-active);
+}
+
+.tinta-toolbar-surface {
+	background: var(--color-bg-toolbar);
+}
+
+.tinta-menu-surface {
+	border-color: var(--color-surface-edge);
+	background:
+		linear-gradient(180deg, var(--color-surface-glaze), transparent 64%),
+		var(--color-bg-menu);
+	box-shadow:
+		0 18px 38px rgba(0, 0, 0, 0.22),
+		inset 0 1px 0 rgba(216, 201, 255, 0.05);
+}
+
+.tinta-pdf-export-progress {
+	border-color: var(--color-surface-active-border);
+	background:
+		linear-gradient(180deg, var(--color-surface-active-glaze), transparent 70%),
+		var(--color-bg-menu);
+	box-shadow:
+		0 18px 38px rgba(0, 0, 0, 0.2),
+		inset 0 1px 0 rgba(216, 201, 255, 0.08);
+}
+
+.tinta-pdf-export-progress-bar {
+	width: 42%;
+	background: linear-gradient(
+		90deg,
+		var(--color-tinta-400),
+		var(--color-accent-soft),
+		var(--color-accent)
+	);
+	animation: tinta-pdf-progress 1.25s ease-in-out infinite;
+}
+
+@keyframes tinta-pdf-progress {
+	0% {
+		transform: translateX(-115%);
+	}
+
+	55% {
+		transform: translateX(92%);
+	}
+
+	100% {
+		transform: translateX(240%);
+	}
+}
+
+.tinta-active-surface,
+.tinta-segment-active {
+	border-color: var(--color-surface-active-border);
+	background: var(--color-bg-note-active);
+}
+
+.tinta-active-surface::before {
+	position: absolute;
+	top: 12px;
+	bottom: 12px;
+	left: 0;
+	width: 2.5px;
+	border-radius: 4px;
+	background: var(--color-surface-active-rail);
+	content: '';
+}
+
+.tinta-segment-active {
+	background: var(--color-bg-control-active);
+}
+
+.tinta-action,
+.tinta-row-action,
+.tinta-menu-action,
+.tinta-text-action {
+	transition:
+		background-color 160ms ease,
+		border-color 160ms ease,
+		color 160ms ease,
+		opacity 160ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+	.tinta-action:not(:disabled):hover,
+	.tinta-segment-active:not(:disabled):hover {
+		border-color: var(--color-surface-active-border);
+		background: var(--color-bg-control-active);
+		color: var(--color-text-primary);
+	}
+
+	.tinta-row-action:not(.bg-bg-selected):not(.tinta-active-surface):not(:disabled):hover {
+		border-color: var(--color-surface-edge);
+		background: var(--color-bg-control);
+		color: var(--color-text-primary);
+	}
+
+	.tinta-sidebar .tinta-row-action:not(.bg-bg-selected):not(:disabled):hover,
+	.tinta-sidebar .tinta-text-action:not(.bg-bg-selected):not(:disabled):hover {
+		border-color: var(--color-sidebar-active-border);
+		background: var(--color-sidebar-hover);
+		color: var(--color-text-primary);
+	}
+
+	.tinta-active-surface:hover {
+		border-color: var(--color-surface-active-border);
+		background: var(--color-bg-note-active);
+	}
+
+	.tinta-menu-action:not(:disabled):hover {
+		background: var(--color-bg-control);
+		color: var(--color-text-primary);
+	}
+
+	.tinta-text-action:not(:disabled):hover {
+		color: var(--color-text-primary);
+	}
+
+	.tinta-control-surface:hover {
+		border-color: var(--color-surface-active-border);
+		background: var(--color-bg-control-active);
+	}
+}

@@ -1,0 +1,12 @@
+{
+  "types": {
+    "feat": { "title": "🚀 Features" },
+    "fix": { "title": "🐞 Bug Fixes" },
+    "perf": { "title": "⚡ Performance" },
+    "refactor": { "title": "♻️ Refactors" },
+    "docs": { "title": "📖 Documentation" },
+    "style": { "title": "🎨 Styling" },
+    "build": { "title": "📦 Build" },
+    "chore": { "title": "🏡 Chore" }
+  }
+}

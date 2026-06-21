@@ -1,0 +1,12 @@
+/* CodeMirror live editor: inline media rendered by image-preview.plugin. The
+   image sits on its own block line beneath the editable `![alt](src)` markdown,
+   matching the read-only preview's image treatment. */
+
+.tinta-cm-image {
+	padding: 8px 0 4px;
+}
+
+.tinta-cm-image img {
+	max-width: 100%;
+	border-radius: 8px;
+}

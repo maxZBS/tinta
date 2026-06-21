@@ -1,0 +1,48 @@
+html,
+body,
+#root {
+	height: 100%;
+	margin: 0;
+	background: var(--color-bg-app);
+}
+
+body {
+	font-family: -apple-system, 'Segoe UI', system-ui, sans-serif;
+	color: var(--color-text-primary);
+	-webkit-font-smoothing: antialiased;
+	overflow: hidden;
+}
+
+button,
+nav,
+aside,
+.no-select {
+	user-select: none;
+}
+
+button:not(:disabled),
+a[href] {
+	cursor: pointer;
+}
+
+button:disabled {
+	cursor: not-allowed;
+}
+
+::selection {
+	color: var(--color-text-primary);
+	background: rgba(167, 139, 250, 0.36);
+}
+
+/* Hide the native number-input spinner — we use our own +/- stepper. */
+.tinta-no-spinner::-webkit-inner-spin-button,
+.tinta-no-spinner::-webkit-outer-spin-button {
+	margin: 0;
+	-webkit-appearance: none;
+	appearance: none;
+}
+
+.tinta-no-spinner {
+	-moz-appearance: textfield;
+	appearance: textfield;
+}

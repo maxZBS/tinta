@@ -1,0 +1,54 @@
+{
+	"$schema": "https://schema.tauri.app/config/2",
+	"productName": "Tinta",
+	"version": "0.12.0",
+	"identifier": "com.max.tinta.app",
+	"build": {
+		"beforeDevCommand": "bun run dev",
+		"devUrl": "http://localhost:1420",
+		"beforeBuildCommand": "bun run build",
+		"frontendDist": "../dist"
+	},
+	"app": {
+		"windows": [
+			{
+				"title": "Tinta",
+				"width": 1447,
+				"height": 942,
+				"minWidth": 720,
+				"minHeight": 400,
+				"titleBarStyle": "Overlay",
+				"hiddenTitle": true,
+				"trafficLightPosition": { "x": 20, "y": 24 }
+			}
+		],
+		"security": {
+			"csp": null,
+			"assetProtocol": {
+				"enable": true,
+				"scope": ["$APPDATA/notes/**/*"]
+			}
+		}
+	},
+	"plugins": {
+		"updater": {
+			"pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IENEN0I5RkVDRkQwRkVEN0YKUldSLzdRLzk3Sjk3emEvK3VrcE5XQTZpRTNDejVjWnV1eGlwcHB5T0h0dGNiTTJ5dWM4Qm5ibTUK",
+			"endpoints": [
+				"https://github.com/maxZBS/tinta/releases/latest/download/latest.json"
+			]
+		}
+	},
+	"bundle": {
+		"active": true,
+		"createUpdaterArtifacts": true,
+		"category": "Productivity",
+		"targets": ["nsis", "dmg", "appimage", "app"],
+		"icon": [
+			"icons/32x32.png",
+			"icons/128x128.png",
+			"icons/128x128@2x.png",
+			"icons/icon.icns",
+			"icons/icon.ico"
+		]
+	}
+}

@@ -1,0 +1,130 @@
+/* Tinta theme tokens. Components consume semantic colors, while the brand ramp
+   keeps the app grounded in a restrained violet ink direction. */
+@theme {
+	/* Brand */
+	--color-tinta-50: #f5f3ff;
+	--color-tinta-100: #ede9fe;
+	--color-tinta-200: #ddd6fe;
+	--color-tinta-300: #c4b5fd;
+	--color-tinta-400: #a78bfa;
+	--color-tinta-500: #8b5cf6;
+	--color-tinta-600: #7c3aed;
+	--color-tinta-700: #6d28d9;
+	--color-tinta-800: #5b21b6;
+	--color-tinta-900: #4c1d95;
+
+	/* Accent */
+	--color-accent: #a78bfa;
+	--color-accent-soft: #d8c9ff;
+
+	/* Highlight wash for ==marked== text */
+	--color-highlight: rgba(167, 139, 250, 0.28);
+
+	/* App base — the solid ink the window paints; surfaces sit opaque on it so
+	   WebKit never re-composites a stack of translucent layers per frame. */
+	--color-bg-app: #0e0b15;
+
+	/* Dark surfaces (opaque, pre-flattened over --color-bg-app) */
+	--color-bg-sidebar: #160f22;
+	--color-bg-list: #120f1a;
+	--color-bg-view: #100d17;
+	--color-bg-elevated: #221c2f;
+	--color-bg-selected: #382b4f;
+	--color-bg-menu: #20182c;
+	--color-bg-breadcrumbs: #181221;
+
+	/* Sidebar polish */
+	--color-sidebar-glaze: rgba(124, 58, 237, 0.16);
+	--color-sidebar-edge: rgba(216, 201, 255, 0.13);
+	--color-sidebar-active-border: rgba(216, 201, 255, 0.16);
+	--color-sidebar-hover: rgba(216, 201, 255, 0.07);
+
+	/* Shared polish */
+	--color-surface-glaze: rgba(167, 139, 250, 0.08);
+	--color-surface-edge: rgba(216, 201, 255, 0.08);
+	--color-surface-active-border: rgba(216, 201, 255, 0.14);
+	--color-surface-active-glaze: rgba(216, 201, 255, 0.1);
+	--color-surface-active-rail: rgba(216, 201, 255, 0.72);
+	--color-bg-control: #191321;
+	--color-bg-control-active: #1c1527;
+	--color-bg-toolbar: #17111f;
+	--color-bg-note-active: #1d152a;
+
+	/* Text */
+	--color-text-primary: #f0ecf8;
+	--color-text-secondary: #b9b0ca;
+	--color-text-muted: #8d84a0;
+
+	/* Misc */
+	--color-border: rgba(216, 201, 255, 0.11);
+	--color-danger: #f0616d;
+	--color-profile: #d8c9ff;
+
+	/* Column widths */
+	--spacing-sidebar: 256px;
+	--spacing-list: 320px;
+}
+
+@media (prefers-color-scheme: light) {
+	:root:not([data-theme='dark']) {
+		--color-bg-app: #f3f1f8;
+		--color-bg-sidebar: #f4f2f9;
+		--color-bg-list: #f8f7fc;
+		--color-bg-view: #fcfcfd;
+		--color-bg-elevated: #eeeaf6;
+		--color-bg-selected: #e2d7f6;
+		--color-bg-menu: #ffffff;
+		--color-bg-breadcrumbs: #f4f2fa;
+
+		--color-surface-glaze: rgba(124, 58, 237, 0.08);
+		--color-surface-edge: rgba(76, 29, 149, 0.1);
+		--color-surface-active-border: rgba(124, 58, 237, 0.16);
+		--color-surface-active-glaze: rgba(124, 58, 237, 0.08);
+		--color-surface-active-rail: rgba(124, 58, 237, 0.5);
+		--color-bg-control: #f1edf8;
+		--color-bg-control-active: #ebe4f6;
+		--color-bg-toolbar: #f2eef8;
+		--color-bg-note-active: #eee7f8;
+		--color-sidebar-hover: rgba(124, 58, 237, 0.08);
+
+		--color-text-primary: #1a1523;
+		--color-text-secondary: #4c4660;
+		--color-text-muted: #837b96;
+
+		--color-border: rgba(76, 29, 149, 0.12);
+		--color-accent: #7c3aed;
+		--color-accent-soft: #6d28d9;
+	}
+}
+
+:root[data-theme='light'] {
+	--color-highlight: rgba(124, 58, 237, 0.18);
+	--color-bg-app: #f3f1f8;
+	--color-bg-sidebar: #f4f2f9;
+	--color-bg-list: #f8f7fc;
+	--color-bg-view: #fcfcfd;
+	--color-bg-elevated: #eeeaf6;
+	--color-bg-selected: #e2d7f6;
+	--color-bg-menu: #ffffff;
+	--color-bg-breadcrumbs: #f4f2fa;
+
+	--color-surface-glaze: rgba(124, 58, 237, 0.08);
+	--color-surface-edge: rgba(76, 29, 149, 0.1);
+	--color-surface-active-border: rgba(124, 58, 237, 0.16);
+	--color-surface-active-glaze: rgba(124, 58, 237, 0.08);
+	--color-surface-active-rail: rgba(124, 58, 237, 0.5);
+	--color-bg-control: #f1edf8;
+	--color-bg-control-active: #ebe4f6;
+	--color-bg-toolbar: #f2eef8;
+	--color-bg-note-active: #eee7f8;
+	--color-sidebar-hover: rgba(124, 58, 237, 0.08);
+
+	--color-text-primary: #1a1523;
+	--color-text-secondary: #4c4660;
+	--color-text-muted: #837b96;
+
+	--color-border: rgba(76, 29, 149, 0.12);
+	--color-accent: #7c3aed;
+	--color-accent-soft: #6d28d9;
+	--color-highlight: rgba(124, 58, 237, 0.18);
+}
